@@ -1,0 +1,164 @@
+---
+title: "Statistical inference with the GSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+
+### Load data
+
+```{r load-data}
+load("gss.Rdata")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+The General Social Survey (GSS) gathers data on contemporary American society in order to monitor and explain trends and constants in attitudes, behaviors, and attributes.
+
+SAMPLE : observations in the sample are collected through personel interview via random sampling. Because there is random sampling involved we can generelize the conslusion to the population from where random sample was drawm from.
+
+SCOPE OF INFERENCE : we can only make correlational study OR conclusions OR association based inference but we cannot make causal conclusion OR causality study because random sampling was involved but random assignement of treatment was not.
+
+TARGET POPLULATION : The target population of the GSS is adults (18+) living in households in the United States. From 1972 to 2004 it was further restricted to those able to do the survey in English. From 2006 to present it has included those able to do the survey in English or Spanish. Those unable to do the survey in either English or Spanish are out-of-scope. Residents of institutions and group quarters are out-of-scope. Those with mental and/or physical conditions that prevent them from doing the survey, but who live in households are part of the target population and in-scope. In the reinterviews those who have died, moved out of the United States, or who no longer live in a household have left the target population and are out-of-scope.
+
+* * *
+
+## Part 2: Research question
+
+My research question is:
+Is there any upword or downword trend in getting educated on the basis of sex?
+
+Based on that question, the analysis was done using the following variables:
+
+year - GSS year for this respondent.
+sex  - sex of the respondent.
+educ - Highest year of school completed.
+
+
+* * *
+
+## Part 3: Exploratory data analysis:
+
+
+we are creating a new dataset "new_data_1" from "gss" dataset eliminating all the NA values from the variable "educ" and group bying with respect to "year" & "sex", thus creating a new variable "avg_educ" that summarises the mean values of "educ".
+
+```{r}
+new_data_1=gss%>%filter(!is.na(educ))%>%group_by(year,sex)%>%summarise(avg_educ=mean(educ),count=n())
+
+View(new_data_1)
+
+```
+
+let's draw a plot to analyse.
+
+```{r}
+ggplot(data = new_data_1, aes(x = year, y= avg_educ,color=sex)) + geom_line()+geom_point()+labs(title="Rate of Education for Male and Female over the year", x="Year",y="avarage of Highest year of school completed")
+```
+
+
+Interpretation:
+
+From the plot, it is evident that the trend is upword for both Males and Females over the year.
+
+
+* * *
+
+## Part 4: Inference
+
+
+To assess our research question, we can make two hipothesis questions:
+
+1)First Hypothesis Test: Is the avarage of highest year of school completed for male changed from 1991 to 2012?
+
+ H0: µ_1991_male=µ_2012_male ag. H1: µ_1991_male != µ_2012_male
+
+
+2)Second Hypothesis Test: Is the avarage of highest year of school completed for female changed from 1991 to 2012?
+
+ H0: µ_1991_female=µ_2012_female ag. H1: µ_1991_female != µ_2012_female
+ 
+For each of this hipothesis test, we will use the inference funciton from the statsr package. Before each test, we wil also validate the conditions of independence and normality to see if our analysis will be valid.Besides, we will extract a confidence interval for each test to reinforce our findings.
+
+
+
+## First Hypothesis
+
+
+```{r first-hypothesis}
+# filter data
+
+new_male=gss%>%filter(!is.na(educ))
+new2_male=new_male%>%filter(year==c(1991,2012))
+new3_male=new2_male%>%filter(sex=="Male")%>%select(year,sex,educ)
+new3_male$year=as.factor(new3_male$year)
+
+str(new3_male)
+```
+
+For the independence rule: We are sure that the 775 samples from the gss dataset are < 10% of our entire population (all american people). Besides, there are no indicators that the sampling procedure could have inserted any kind of dependence between interviewed people. Therefore, we can assume that our data is independent.
+
+
+```{r}
+# Hypothesis test
+
+inference(y = educ, x = year, data =new3_male, statistic = "mean", type = "ht",null = 0, alternative = 'twosided', method = "theoretical")
+
+# Confidence interval
+
+inference(y = educ, x = year, data =new3_male, statistic = "mean", type = "ci", conf_level = 0.95, alternative = 'twosided', method = "theoretical")
+```
+
+# Conclusion:
+
+As our first analysis,"The average of highest year of school completed for male" in 1991 and 2012 were very similar,13.287 in 1991 against 13.5315 in 2012, and the high p-value of 0.2704 indeed confirm to us that we have no evidence to state that "the average of highest year of school completed for Male" changed in these years.
+
+To reinforce the result, we also evaluate the confidence interval, and we can interpret it by the following way: "We are 95% confident that the average difference of the average of highest year of school completed for male in 1991 and 2012 (-0.6803 , 0.1912)". As the confidence interval contains the value 0, this reinforce our idea that we can not reject our null hypothesis.
+
+
+## Second Hypothesis
+
+```{r second-hypothesis}
+# filter data
+
+new_female=gss%>%filter(!is.na(educ))
+new2_female=new_female%>%filter(year==c(1991,2012))
+new3_female=new2_female%>%filter(sex=="Female")%>%select(year,sex,educ)
+new3_female$year=as.factor(new3_female$year)
+
+str(new3_female)
+```
+
+For the independence rule: We are sure that the 966 samples from the gss dataset are < 10% of our entire population (all american people). Besides, there are no indicators that the sampling procedure could have inserted any kind of dependence between interviewed people. Therefore, we can assume that our data is independent.
+
+```{r}
+# Hypothesis test
+
+inference(y = educ, x = year, data =new3_female, statistic = "mean", type = "ht",null = 0, alternative = 'twosided', method = "theoretical")
+
+# Confidence interval
+
+inference(y = educ, x = year, data =new3_female, statistic = "mean", type = "ci", conf_level = 0.95, alternative = 'twosided', method = "theoretical")
+```
+
+# Conclusion
+
+As our second analysis,"The average of highest year of school completed for female" in 1991 and 2012 were not so similar,12.6627 in 1991 against 13.6476 in 2012, and the very low p-value of <0.0001 indeed confirm to us that we have no evidence to state that "the average of highest year of school completed for female"  not changed in these years. That is, we have to reject our null hypothesis
+
+To reinforce the result, we also evaluate the confidence interval, and we can interpret it by the following way: "We are 95% confident that the average difference of the average of highest year of school completed for female in 1991 and 2012 (-1.3593 , -0.6104)". As the confidence interval  does not contain the value 0, this reinforce our idea that we will reject our null hypothesis.
+
